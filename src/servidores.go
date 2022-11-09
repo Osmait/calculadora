@@ -27,7 +27,7 @@ func main() {
 		for _, servidor := range servidores {
 			go revisarServidor(servidor, canal)
 		}
-		time.Sleep(1 * time.Second)
+
 		fmt.Println(<-canal)
 		count++
 

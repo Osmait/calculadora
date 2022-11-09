@@ -8,20 +8,21 @@ import (
 type Router struct {
 	//Reglas para definir de que rutas pasan a que handler, mapa que pasa de strings a handler
 	//mapa que tenga como llaves strings y que mapee a HandlerFunc
-	rules map[string]http.HandlerFunc
+	rules map[string]map[string]http.HandlerFunc
 }
 
 // forma de instanciar el router, similar al NewServer() del archivo servidor.go
 func NewRouter() *Router {
 	return &Router{
 		//a diferencia del servidor, aqui el router debe empezar en un estado vacio, creamos un mapa vacio
-		rules: make(map[string]http.HandlerFunc),
+		rules: make(map[string]map[string]http.HandlerFunc),
 	}
 }
 
-func (r *Router) FindHandler(path string) (http.HandlerFunc, bool) {
-	handbler, exit := r.rules[path]
-	return handbler, exit
+func (r *Router) FindHandler(path string, method string) (http.HandlerFunc, bool, bool) {
+	_, exit := r.rules[path]
+	handler, methodExist := r.rules[path][method]
+	return handler, methodExist, exit
 }
 
 // Metodo ServeHTTP de router para poder implementar en el handler el atributo s.router en server.go
@@ -31,9 +32,14 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, request *http.Request) {
 
 	//impresion de mensaje respuesta que el servidor da a la ruta
 	//Fprintf es un escritor, que recive w que es el escritor asignado, y el mensaje que queremos mostrar
-	handle, exist := r.FindHandler(request.URL.Path)
+	handle, methodExist, exist := r.FindHandler(request.URL.Path, request.Method)
 	if !exist {
 		w.WriteHeader(http.StatusFound)
+		return
+	}
+
+	if !methodExist {
+		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
 

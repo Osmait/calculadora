@@ -15,8 +15,13 @@ func NewServer(port string) *Server {
 	}
 }
 
-func (s *Server) Handle(path string, handler http.HandlerFunc) {
-	s.router.rules[path] = handler
+func (s *Server) Handle(method string, path string, handler http.HandlerFunc) {
+
+	_, exit := s.router.rules[path]
+	if !exit {
+		s.router.rules[path] = make(map[string]http.HandlerFunc)
+	}
+	s.router.rules[path][method] = handler
 }
 
 func (s *Server) Listen() error {
